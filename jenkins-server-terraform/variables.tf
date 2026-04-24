@@ -43,7 +43,7 @@ variable "instance_name" {
 
 variable "instance_type" {
   description = "Type of EC2 instance"
-  default     = "c7i-flex.large"
+  default     = "m7i-flex.large"
 }
 
 
