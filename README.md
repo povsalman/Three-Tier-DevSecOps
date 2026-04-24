@@ -183,7 +183,7 @@ Create an IAM user with permissions for:
 #### 1.3 Setup S3 and DynamoDB for Terraform Backend
 ```bash
 # Create S3 bucket for Terraform state
-aws s3 mb s3://your-terraform-state-bucket --region us-west-2
+aws s3 mb s3://your-terraform-state-bucket --region us-east-2
 
 # Create DynamoDB table for state locking
 aws dynamodb create-table \
@@ -191,7 +191,7 @@ aws dynamodb create-table \
   --attribute-definitions AttributeName=LockID,AttributeType=S \
   --key-schema AttributeName=LockID,KeyType=HASH \
   --billing-mode PAY_PER_REQUEST \
-  --region us-west-2
+  --region us-east-1
 ```
 
 ### Step 2: Deploy Jenkins Server
@@ -275,12 +275,12 @@ http://<JENKINS_IP>:9090
 # Create frontend repository
 aws ecr create-repository \
   --repository-name frontend \
-  --region us-west-2
+  --region us-east-1
 
 # Create backend repository
 aws ecr create-repository \
   --repository-name backend \
-  --region us-west-2
+  --region us-east-1
 ```
 
 ### Step 6: Deploy EKS Cluster
@@ -301,7 +301,7 @@ terraform apply -auto-approve
 ```bash
 aws eks update-kubeconfig \
   --name three-tier-k8s-eks-cluster \
-  --region us-west-2
+  --region us-east-1
 
 # Verify cluster access
 kubectl get nodes
@@ -320,7 +320,7 @@ aws iam create-policy \
 
 # Create OIDC provider
 eksctl utils associate-iam-oidc-provider \
-  --region us-west-2 \
+  --region us-east-1 \
   --cluster three-tier-k8s-eks-cluster \
   --approve
 
@@ -657,9 +657,9 @@ kubectl logs <pod-name> -n three-tier
 **5. ECR Push Failed:**
 ```bash
 # Re-authenticate to ECR
-aws ecr get-login-password --region us-west-2 | \
+aws ecr get-login-password --region us-east-1 | \
   docker login --username AWS --password-stdin \
-  <account-id>.dkr.ecr.us-west-2.amazonaws.com
+  <account-id>.dkr.ecr.us-east-1.amazonaws.com
 ```
 
 ---
