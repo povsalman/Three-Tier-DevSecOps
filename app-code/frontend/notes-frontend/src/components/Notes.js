@@ -13,7 +13,7 @@ const Notes = () => {
 
     const fetchNotes = async () => {
         try {
-            const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000/api/notes/';
+            const apiUrl = 'http://api.3devsecops.tech/api/notes/';
             const response = await axios.get(apiUrl);
             setNotes(response.data || []);
         } catch (error) {
@@ -24,7 +24,7 @@ const Notes = () => {
 
     const addNote = async () => {
         try {
-            const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000/api/notes/';
+            const apiUrl = 'http://api.3devsecops.tech/api/notes/';
             const response = await axios.post(apiUrl, { title, content });
             setNotes([...notes, response.data]);
             setTitle('');

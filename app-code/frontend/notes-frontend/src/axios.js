@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 const instance = axios.create({
-  baseURL: process.env.REACT_APP_API || 'http://localhost:8000',
+  baseURL: 'http://api.3devsecops.tech',
 });
 
 instance.interceptors.request.use((config) => {
