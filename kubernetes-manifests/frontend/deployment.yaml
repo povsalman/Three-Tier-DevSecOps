@@ -29,6 +29,6 @@ spec:
         imagePullPolicy: Always
         env:
           - name: REACT_APP_BACKEND_URL
-            value: "http://api.dovz.shop/api/notes/"
+            value: "http://api.3devsecops.tech/api/notes/"
         ports:
         - containerPort: 3000
