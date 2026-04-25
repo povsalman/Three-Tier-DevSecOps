@@ -1,48 +1,57 @@
 # Three-Tier DevSecOps Web Application on AWS EKS
 
-A complete DevSecOps implementation deploying a three-tier web application on AWS Elastic Kubernetes Service (EKS) with automated CI/CD pipelines, comprehensive security scanning, and production-grade monitoring.
+A complete DevSecOps implementation deploying a three-tier web application on AWS Elastic Kubernetes Service (EKS) with automated CI/CD pipelines, comprehensive security scanning, and GitOps-based continuous delivery.
+
+**Submitted by:** Salman Khan (22I-1285) · Maryum Tanvir (22I-0751)  
+**Course:** Cloud Computing — FAST NUCES Islamabad  
+**AWS Region:** `us-east-1` (US East — N. Virginia)
 
 ---
 
 ## 📋 Project Overview
 
-This project demonstrates a production-ready deployment of a microservices-based three-tier application leveraging modern DevSecOps practices. The architecture integrates Infrastructure as Code (Terraform), continuous integration/deployment (Jenkins + ArgoCD), security scanning (Trivy + SonarQube), and real-time monitoring (Prometheus + Grafana) on AWS cloud infrastructure.
+This project demonstrates a production-ready deployment of a three-tier application using modern DevSecOps practices. The pipeline integrates Infrastructure as Code (Terraform), continuous integration/deployment (Jenkins + ArgoCD), and comprehensive security scanning (Trivy, SonarQube, and OWASP Dependency-Check) on AWS cloud infrastructure.
 
 The application consists of:
-- **Frontend**: React-based user interface
-- **Backend**: RESTful API services
-- **Database**: Persistent data layer with MongoDB
+- **Frontend**: React.js user interface
+- **Backend**: Node.js / Express RESTful API
+- **Database**: MongoDB with persistent EBS-backed storage
 
 ---
 
 ## 🏗️ Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                         AWS Cloud                           │
-│  ┌────────────────────────────────────────────────────────┐ │
-│  │              EKS Cluster (Kubernetes)                  │ │
-│  │  ┌──────────┐  ┌──────────┐  ┌──────────┐              │ │
-│  │  │ Frontend │  │ Backend  │  │ Database │              │ │
-│  │  │   Pods   │  │   Pods   │  │   Pods   │            │ │
-│  │  └────┬─────┘  └────┬─────┘  └────┬─────┘            │ │
-│  │       │             │             │                   │ │
-│  │  ┌────┴─────────────┴─────────────┴─────┐            │ │
-│  │  │        Load Balancer (ALB)           │            │ │
-│  │  └──────────────────────────────────────┘            │ │
-│  │                                                       │ │
-│  │  ┌──────────────┐  ┌──────────────┐                 │ │
-│  │  │  Prometheus  │  │   ArgoCD     │                 │ │
-│  │  │  & Grafana   │  │   (GitOps)   │                 │ │
-│  │  └──────────────┘  └──────────────┘                 │ │
-│  └────────────────────────────────────────────────────────┘ │
-│                                                              │
-│  ┌────────────────┐  ┌────────────────┐  ┌──────────────┐  │
-│  │ Jenkins EC2    │  │      ECR       │  │  S3 Bucket   │  │
-│  │  (CI Server)   │  │ (Container     │  │  (Terraform  │  │
-│  │                │  │  Registry)     │  │   State)     │  │
-│  └────────────────┘  └────────────────┘  └──────────────┘  │
-└─────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│                           AWS Cloud (us-east-1)                 │
+│                                                                 │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │               EKS Cluster  (three-tier-k8s-eks-cluster)  │   │
+│  │  Namespace: three-tier                                   │   │
+│  │  ┌───────────┐  ┌───────────┐  ┌────────────────────┐   │   │
+│  │  │ Frontend  │  │  Backend  │  │ MongoDB + EBS PVC  │   │   │
+│  │  │   Pods    │  │   Pods    │  │       Pods         │   │   │
+│  │  └─────┬─────┘  └─────┬─────┘  └────────────────────┘   │   │
+│  │        └──────────────┴──────────────┐                   │   │
+│  │                                      ▼                   │   │
+│  │              AWS Application Load Balancer (ALB)         │   │
+│  │              (created by AWS Load Balancer Controller)   │   │
+│  │                                                          │   │
+│  │  ┌──────────────┐   ┌──────────────────────────────┐    │   │
+│  │  │    ArgoCD    │   │  AWS LB Controller (kube-sys)│    │   │
+│  │  │  (argocd ns) │   └──────────────────────────────┘    │   │
+│  │  └──────────────┘                                        │   │
+│  └──────────────────────────────────────────────────────────┘   │
+│                                                                 │
+│  ┌───────────────────┐  ┌──────────────┐  ┌─────────────────┐  │
+│  │   Jenkins EC2     │  │  Amazon ECR  │  │   S3 Bucket     │  │
+│  │  (CI Server)      │  │  frontend    │  │ (Terraform      │  │
+│  │  + SonarQube      │  │  backend     │  │  state + lock)  │  │
+│  │  :8080 / :9000    │  └──────────────┘  └─────────────────┘  │
+│  └───────────────────┘                                          │
+│                              ▲                                  │
+│        Cloudflare DNS ───────┘  (3devsecops.tech → ALB DNS)    │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -50,39 +59,27 @@ The application consists of:
 ## 🎯 Key Features
 
 ### DevSecOps Pipeline
-- **Continuous Integration**: Automated builds with Jenkins on code commits
-- **Security Scanning**: 
-  - SonarQube for code quality and vulnerability analysis
-  - Trivy for container image scanning
-  - OWASP Dependency Check for dependency vulnerabilities
-- **Automated Testing**: Integration and unit tests in CI pipeline
-- **Container Registry**: Amazon ECR for secure image storage
+- **Continuous Integration**: Jenkins pipelines triggered by GitHub webhooks on every push
+- **Code Quality**: SonarQube for static code analysis with Quality Gate enforcement
+- **Dependency Scanning**: OWASP Dependency-Check with NVD API key integration
+- **Container Scanning**: Trivy for both filesystem and Docker image vulnerability scanning
+- **Container Registry**: Amazon ECR for private, encrypted Docker image storage
 
 ### GitOps Deployment
-- **ArgoCD**: Declarative continuous deployment from Git repositories
-- **Automated Sync**: Kubernetes manifests automatically deployed on repository changes
-- **Rollback Capability**: Easy version control and rollback mechanisms
+- **ArgoCD**: Declarative continuous delivery — monitors GitHub and auto-deploys manifest changes
+- **5 ArgoCD Applications**: database, backend, frontend, frontend-ingress, backend-ingress
+- **Automatic Sync**: New image tags committed by Jenkins automatically trigger ArgoCD deployment
 
-### Infrastructure Management
-- **Terraform**: Complete infrastructure provisioned as code
-- **AWS Services**: 
-  - EKS for managed Kubernetes
-  - VPC with security groups
-  - IAM roles and policies
-  - S3 for Terraform state
-  - DynamoDB for state locking
-  - EC2 for Jenkins server
+### Infrastructure as Code
+- **Terraform**: Jenkins EC2 server fully provisioned with Terraform (7 `.tf` files)
+- **eksctl**: EKS cluster created using `eksctl` with `m7i-flex.large` nodes
+- **Remote State**: Terraform state stored in S3 (`salman-three-tier-devsecops-project-bucket-s3`)
+- **State Locking**: DynamoDB table `lock-files` (partition key: `LockID`) for concurrent-safe state management
 
-### Monitoring & Observability
-- **Prometheus**: Metrics collection from all application components
-- **Grafana**: Custom dashboards for visualization and alerting
-- **Cluster Monitoring**: Real-time health monitoring of Kubernetes resources
-
-### High Availability & Scalability
-- **Multi-AZ Deployment**: Resources distributed across availability zones
-- **Auto-scaling**: Horizontal pod autoscaling based on metrics
-- **Load Balancing**: AWS Application Load Balancer for traffic distribution
-- **Persistent Storage**: Persistent volumes for database data retention
+### High Availability & Persistence
+- **Multi-AZ nodes**: EKS worker nodes distributed across availability zones
+- **Persistent Volumes**: MongoDB data backed by EBS volumes via Kubernetes PVC
+- **AWS ALB**: Application Load Balancer provisioned automatically by the AWS Load Balancer Controller
 
 ---
 
@@ -90,587 +87,544 @@ The application consists of:
 
 | Component | Technology |
 |-----------|-----------|
-| **Cloud Provider** | AWS (EKS, EC2, ECR, S3, DynamoDB) |
+| **Cloud Platform** | AWS (EKS, EC2, ECR, S3, DynamoDB, IAM, ALB) |
 | **Container Orchestration** | Kubernetes (Amazon EKS) |
-| **Infrastructure as Code** | Terraform |
+| **Infrastructure as Code** | Terraform (Jenkins server), eksctl (EKS cluster) |
 | **CI/CD** | Jenkins, ArgoCD |
 | **Container Runtime** | Docker |
-| **Security Scanning** | SonarQube, Trivy, OWASP Dependency-Check |
-| **Monitoring** | Prometheus, Grafana |
+| **Code Quality** | SonarQube |
+| **Container Scanning** | Trivy |
+| **Dependency Scanning** | OWASP Dependency-Check (NVD API) |
 | **Package Manager** | Helm |
+| **DNS** | Cloudflare |
 | **Version Control** | Git, GitHub |
-| **Frontend** | React.js, Node.js |
+| **Frontend** | React.js |
 | **Backend** | Node.js, Express |
 | **Database** | MongoDB |
 
 ---
 
-## 📁 Project Structure
+## 📁 Repository Structure
 
 ```
-.
-├── jenkins-server-terraform/    # Terraform configs for Jenkins EC2
-│   ├── backend.tf
-│   ├── main.tf
-│   ├── variables.tf
-│   └── install.sh
-├── eks-terraform/               # Terraform configs for EKS cluster
-│   ├── backend.tf
-│   ├── main.tf
-│   └── variables.tf
-├── kubernetes-manifests/        # K8s deployment configs
+Three-Tier-DevSecOps/
+├── jenkins-server-terraform/        # Terraform configs for Jenkins EC2 instance
+│   ├── 01_provider.tf               # AWS provider configuration
+│   ├── 02_backend.tf                # S3 remote backend + DynamoDB locking
+│   ├── 03_ec2.tf                    # Jenkins EC2 instance resource
+│   ├── 04_ami.tf                    # AMI data source lookup
+│   ├── 05_vpc.tf                    # VPC, subnets, security groups
+│   ├── 06_iam-role.tf               # IAM role for Jenkins EC2
+│   ├── 07_iam-instance-profile.tf   # Instance profile attachment
+│   ├── variables.tf                 # Variable definitions
+│   └── scripts/                     # User data / install scripts
+│
+├── kubernetes-manifests/            # Kubernetes deployment manifests (managed by ArgoCD)
 │   ├── backend/
-│   │   ├── deployment.yaml
+│   │   ├── deployment.yaml          # Backend Deployment (image tag updated by Jenkins)
 │   │   └── service.yaml
 │   ├── frontend/
-│   │   ├── deployment.yaml
+│   │   ├── deployment.yaml          # Frontend Deployment (image tag updated by Jenkins)
 │   │   └── service.yaml
 │   ├── database/
 │   │   ├── deployment.yaml
 │   │   ├── service.yaml
-│   │   └── pvc.yaml
-│   └── ingress/
-│       └── ingress.yaml
-├── jenkins-pipelines/           # Jenkinsfiles for CI/CD
-│   ├── frontend-pipeline
-│   └── backend-pipeline
-├── argocd/                      # ArgoCD application configs
-│   ├── application-backend.yaml
-│   ├── application-frontend.yaml
-│   └── application-database.yaml
-├── monitoring/                  # Prometheus & Grafana configs
-│   └── grafana-dashboards/
-├── frontend/                    # Frontend application code
-│   ├── Dockerfile
-│   ├── package.json
-│   └── src/
-└── backend/                     # Backend application code
-    ├── Dockerfile
-    ├── package.json
-    └── src/
+│   │   └── pvc.yaml                 # PersistentVolumeClaim for MongoDB (EBS)
+│   ├── frontend-ingress/            # Ingress for frontend traffic routing
+│   └── backend-ingress/             # Ingress for backend traffic routing
+│
+├── jenkins-pipeline/                # Jenkinsfiles for CI/CD pipelines
+│   ├── jenkinsfile-frontend         # 11-stage frontend CI pipeline
+│   └── jenkinsfile-backend          # Backend CI pipeline
+│
+└── app-code/                        # Application source code
+    ├── frontend/
+    │   └── notes-frontend/          # React.js frontend source
+    │       └── Dockerfile
+    └── backend/
+        └── Dockerfile               # Backend container image
 ```
 
 ---
 
-## 🚀 Deployment Guide
+## 🚀 Complete Deployment Guide
 
 ### Prerequisites
 
-- AWS Account with appropriate permissions
-- AWS CLI configured with credentials
-- Terraform (v1.0+)
-- kubectl
-- Helm
+Before starting, ensure you have on your **local machine**:
+- [Terraform](https://www.terraform.io/downloads) (v1.0+)
+- [AWS CLI v2](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html)
+- [kubectl](https://kubernetes.io/docs/tasks/tools/)
+- [eksctl](https://eksctl.io/)
+- [Helm](https://helm.sh/)
 - Git
 
-### Step 1: Setup AWS Infrastructure
+---
 
-#### 1.1 Configure AWS CLI
+### Step 1: IAM User Setup
+
+**Objective:** Create an IAM user with the permissions needed to provision EKS, EC2, ECR, S3, and DynamoDB resources.
+
+1. Navigate to AWS Console → **IAM → Users → Create User**
+2. Enter a username (e.g., `devsecops-user`)
+3. Attach **AdministratorAccess** (sufficient for this project; use scoped policies in production)
+4. Click **Create User**
+5. Open the user → **Security credentials → Create access key**
+6. Select **Command Line Interface (CLI)**
+7. **Download the CSV file** — it contains your `Access Key ID` and `Secret Access Key`
+
+---
+
+### Step 2: Install & Configure Tools Locally
+
 ```bash
+# Verify Terraform
+terraform --version
+
+# Verify AWS CLI
+aws --version
+
+# Configure AWS CLI with downloaded IAM credentials
 aws configure
-# Enter your AWS Access Key ID, Secret Access Key, and default region
+# AWS Access Key ID:     [from CSV]
+# AWS Secret Access Key: [from CSV]
+# Default region:        us-east-1
+# Default output format: json
 ```
 
-#### 1.2 Create IAM User
-Create an IAM user with permissions for:
-- EKS (Full Access)
-- EC2 (Full Access)
-- ECR (Full Access)
-- S3 (for Terraform state)
-- DynamoDB (for state locking)
-- VPC and networking resources
+---
 
-#### 1.3 Setup S3 and DynamoDB for Terraform Backend
+### Step 3: Create S3 Bucket & DynamoDB Table (Terraform Backend)
+
+**Via AWS Console:**
+
+**S3 Bucket:**
+1. AWS Console → S3 → **Create Bucket**
+2. Name: `salman-three-tier-devsecops-project-bucket-s3` (must be globally unique)
+3. Region: `us-east-1`
+4. Click **Create Bucket**
+
+**DynamoDB Table:**
+1. AWS Console → DynamoDB → **Create Table**
+2. Table name: `lock-files`
+3. Partition key: `LockID` (String)
+4. Click **Create Table**
+
+---
+
+### Step 4: Deploy Jenkins EC2 Server with Terraform
+
 ```bash
-# Create S3 bucket for Terraform state
-aws s3 mb s3://your-terraform-state-bucket --region us-east-2
-
-# Create DynamoDB table for state locking
-aws dynamodb create-table \
-  --table-name terraform-lock \
-  --attribute-definitions AttributeName=LockID,AttributeType=S \
-  --key-schema AttributeName=LockID,KeyType=HASH \
-  --billing-mode PAY_PER_REQUEST \
-  --region us-east-1
+# Clone the repository
+git clone https://github.com/povsalman/Three-Tier-DevSecOps.git
+cd Three-Tier-DevSecOps/jenkins-server-terraform
 ```
 
-### Step 2: Deploy Jenkins Server
+**1. Update `02_backend.tf`** with your S3 bucket name and region (already set to `salman-three-tier-devsecops-project-bucket-s3` and `us-east-1`).
 
+**2. Create an EC2 Key Pair:**
 ```bash
-cd jenkins-server-terraform
+aws ec2 create-key-pair \
+  --key-name devsecops-project \
+  --query "KeyMaterial" \
+  --output text > devsecops-project.pem
+```
 
-# Update backend.tf with your S3 bucket name
-# Update variables.tf with your configurations
-
+**3. Deploy Jenkins Server:**
+```bash
 terraform init
 terraform validate
 terraform plan
-terraform apply -auto-approve
+terraform apply
+```
+> Terraform will provision the EC2 instance, VPC, security groups, IAM role, and instance profile.
+
+**4. SSH into the Jenkins Server:**
+```bash
+# Run from the directory containing devsecops-project.pem
+chmod 400 "devsecops-project.pem"
+ssh -i "devsecops-project.pem" ubuntu@<JENKINS_EC2_PUBLIC_IP>
 ```
 
-**Access Jenkins:**
-- Get the public IP from Terraform output
-- Access at `http://<JENKINS_PUBLIC_IP>:8080`
-- Retrieve initial admin password:
+**5. Configure AWS CLI on Jenkins Server:**
 ```bash
-ssh -i your-key.pem ubuntu@<JENKINS_PUBLIC_IP>
+aws configure
+# Enter the same IAM credentials as Step 2
+```
+
+---
+
+### Step 5: Install Jenkins Plugins
+
+**Access Jenkins:** `http://<JENKINS_EC2_PUBLIC_IP>:8080`
+
+**Retrieve initial admin password:**
+```bash
 sudo cat /var/lib/jenkins/secrets/initialAdminPassword
 ```
 
-### Step 3: Configure Jenkins
+1. Paste the password to unlock Jenkins
+2. Select **Install Suggested Plugins**
+3. After completion, go to **Manage Jenkins → Plugins → Available Plugins** and install:
+   - AWS Credentials
+   - AWS Steps
+   - Docker
+   - Eclipse Temurin Installer
+   - NodeJS
+   - OWASP Dependency-Check
+   - SonarQube Scanner
+4. Create a Jenkins admin user and complete the setup wizard
 
-#### 3.1 Install Required Plugins
-Navigate to: **Manage Jenkins → Plugins → Available Plugins**
+---
 
-Install:
-- AWS Credentials
-- AWS Steps
-- Docker
-- Docker Pipeline
-- Eclipse Temurin Installer
-- NodeJS
-- OWASP Dependency-Check
-- SonarQube Scanner
+### Step 6: SonarQube Setup
 
-#### 3.2 Configure Tools
-**Dashboard → Manage Jenkins → Tools**
+**Access SonarQube:** `http://<JENKINS_EC2_PUBLIC_IP>:9000`  
+**Default credentials:** `admin` / `admin`
 
-Configure:
-- JDK (Temurin Java 17)
-- NodeJS (Latest LTS)
-- SonarQube Scanner
-- Docker
-- OWASP Dependency-Check
+1. **Create Frontend Project:** Projects → Create Project → Name: `frontend`
+2. **Create Backend Project:** Projects → Create Project → Name: `backend`
+3. **Update project keys** in `jenkins-pipeline/jenkinsfile-frontend` and `jenkinsfile-backend` with the project keys shown by SonarQube
+4. **Generate a token:** My Account → Security → Tokens → Generate → save the token
+5. **Create Webhook:** Administration → Configuration → Webhooks → Create  
+   URL: `http://<JENKINS_EC2_IP>:8080/sonarqube-webhook/`
 
-#### 3.3 Add Credentials
-**Manage Jenkins → Credentials → System → Global Credentials**
+---
 
-Add:
-1. **AWS Access Key** (Kind: Secret text, ID: `aws-key`)
-2. **GitHub Username & Password** (Kind: Username with password)
-3. **GitHub Token** (Kind: Secret text)
-4. **SonarQube Token** (Kind: Secret text, ID: `sonar-token`)
-5. **ECR Repository URLs** (Kind: Secret text)
-6. **AWS Account ID** (Kind: Secret text)
-
-### Step 4: Setup SonarQube
-
-```bash
-# Access SonarQube on Jenkins server
-http://<JENKINS_IP>:9090
-
-# Default credentials: admin / admin
-```
-
-**Configuration Steps:**
-1. Create projects for frontend and backend
-2. Generate authentication tokens for each project
-3. Configure webhooks pointing to Jenkins:
-   - URL: `http://<JENKINS_IP>:8080/sonarqube-webhook/`
-4. Add tokens to Jenkins credentials
-
-### Step 5: Create ECR Repositories
+### Step 7: Create Amazon ECR Repositories
 
 ```bash
 # Create frontend repository
-aws ecr create-repository \
-  --repository-name frontend \
-  --region us-east-1
+aws ecr create-repository --repository-name frontend --region us-east-1
 
 # Create backend repository
-aws ecr create-repository \
-  --repository-name backend \
-  --region us-east-1
+aws ecr create-repository --repository-name backend --region us-east-1
+
+# Login Docker to ECR (run on Jenkins server)
+aws ecr get-login-password --region us-east-1 | \
+  docker login --username AWS --password-stdin <ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com
 ```
 
-### Step 6: Deploy EKS Cluster
+**Update Kubernetes manifests** with the ECR repository URIs:
+- `kubernetes-manifests/frontend/deployment.yaml`
+- `kubernetes-manifests/backend/deployment.yaml`
+
+**Add Jenkins Credentials** (Manage Jenkins → Credentials → System → Global Credentials):
+
+| Credential ID | Kind | Value |
+|---|---|---|
+| `aws-key` | Secret text | AWS Access Key ID |
+| `GITHUB` | Username with password | GitHub username + Personal Access Token |
+| `github` | Secret text | GitHub Personal Access Token |
+| `sonar-token` | Secret text | SonarQube token from Step 6 |
+| `ECR_REPO_FRONTEND` | Secret text | Frontend ECR repository URL |
+| `ECR_REPO_BACKEND` | Secret text | Backend ECR repository URL |
+| `ACCOUNT_ID` | Secret text | AWS Account ID |
+| `nvd-api-key` | Secret text | Free NVD API key (from nvd.nist.gov) |
+
+---
+
+### Step 8: Configure Jenkins Tools & SonarQube Server
+
+**Manage Jenkins → Tools:**
+
+| Tool | Name |
+|---|---|
+| JDK | `jdk` (latest) |
+| SonarQube Scanner | `sonar-scanner` (latest) |
+| NodeJS | `nodejs` (latest) |
+| Dependency-Check | `DP-Check` (latest) |
+| Docker | `docker` (latest) |
+
+**Manage Jenkins → System → SonarQube installations:**
+- Name: `sonar-server`
+- Server URL: `http://<JENKINS_EC2_IP>:9000`
+- Server authentication token: `sonar-token`
+
+---
+
+### Step 9: Deploy EKS Cluster
 
 ```bash
-cd eks-terraform
-
-# Update backend.tf with your S3 bucket
-# Review and update variables.tf
-
-terraform init
-terraform validate
-terraform plan
-terraform apply -auto-approve
-```
-
-**Configure kubectl:**
-```bash
-aws eks update-kubeconfig \
+# Create EKS cluster (takes 10–15 minutes)
+eksctl create cluster \
   --name three-tier-k8s-eks-cluster \
-  --region us-east-1
+  --region us-east-1 \
+  --node-type m7i-flex.large \
+  --nodes-min 2 \
+  --nodes-max 2
 
-# Verify cluster access
+# Verify cluster is ready
 kubectl get nodes
 ```
 
-### Step 7: Setup Load Balancer Controller
+**Install AWS Load Balancer Controller:**
 
 ```bash
-# Download IAM policy
-curl -O https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.5.4/docs/install/iam_policy.json
+# 1. Download IAM policy
+curl -O https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/main/docs/install/iam_policy.json
 
-# Create IAM policy
+# 2. Create IAM policy
 aws iam create-policy \
   --policy-name AWSLoadBalancerControllerIAMPolicy \
   --policy-document file://iam_policy.json
 
-# Create OIDC provider
+# 3. Associate OIDC provider
 eksctl utils associate-iam-oidc-provider \
-  --region us-east-1 \
-  --cluster three-tier-k8s-eks-cluster \
+  --region=us-east-1 \
+  --cluster=three-tier-k8s-eks-cluster \
   --approve
 
-# Create service account
+# 4. Create IAM service account
 eksctl create iamserviceaccount \
   --cluster=three-tier-k8s-eks-cluster \
   --namespace=kube-system \
   --name=aws-load-balancer-controller \
   --role-name AmazonEKSLoadBalancerControllerRole \
   --attach-policy-arn=arn:aws:iam::<ACCOUNT_ID>:policy/AWSLoadBalancerControllerIAMPolicy \
-  --approve
+  --approve \
+  --region=us-east-1
 
-# Install Load Balancer Controller
+# 5. Install via Helm
 helm repo add eks https://aws.github.io/eks-charts
 helm repo update eks
-
-helm install aws-load-balancer-controller \
-  eks/aws-load-balancer-controller \
+helm install aws-load-balancer-controller eks/aws-load-balancer-controller \
   -n kube-system \
   --set clusterName=three-tier-k8s-eks-cluster \
   --set serviceAccount.create=false \
   --set serviceAccount.name=aws-load-balancer-controller
 
-# Verify installation
+# 6. Verify (wait 1–2 minutes)
 kubectl get deployment -n kube-system aws-load-balancer-controller
 ```
 
-### Step 8: Install Prometheus & Grafana
-
-```bash
-# Add Helm repositories
-helm repo add stable https://charts.helm.sh/stable
-helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-helm repo update
-
-# Create monitoring namespace
-kubectl create namespace monitoring
-
-# Install Prometheus stack (includes Grafana)
-helm install stable prometheus-community/kube-prometheus-stack \
-  -n monitoring
-
-# Verify installation
-kubectl get pods -n monitoring
-kubectl get svc -n monitoring
-```
-
-**Expose Prometheus & Grafana:**
-```bash
-# Edit Prometheus service
-kubectl edit svc stable-kube-prometheus-sta-prometheus -n monitoring
-# Change type from ClusterIP to LoadBalancer
-
-# Edit Grafana service
-kubectl edit svc stable-grafana -n monitoring
-# Change type from ClusterIP to LoadBalancer
-
-# Get external IPs
-kubectl get svc -n monitoring
-```
-
-**Access Grafana:**
-- URL: `http://<GRAFANA_LOADBALANCER_IP>`
-- Username: `admin`
-- Password: `prom-operator`
-
-**Import Dashboards:**
-1. Navigate to Dashboards → Import
-2. Import dashboard ID: `3119` (Kubernetes cluster monitoring)
-3. Configure Prometheus as data source
-
-### Step 9: Setup ArgoCD
-
-```bash
-# Create namespace
-kubectl create namespace argocd
-
-# Install ArgoCD
-kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/v2.4.7/manifests/install.yaml
-
-# Verify installation
-kubectl get pods -n argocd
-
-# Expose ArgoCD server
-kubectl patch svc argocd-server -n argocd -p '{"spec": {"type": "LoadBalancer"}}'
-
-# Get LoadBalancer URL
-kubectl get svc argocd-server -n argocd
-```
-
-**Access ArgoCD:**
-```bash
-# Get initial admin password
-kubectl get secret argocd-initial-admin-secret \
-  -n argocd \
-  -o jsonpath="{.data.password}" | base64 -d
-```
-
-- URL: `https://<ARGOCD_LOADBALANCER_DNS>`
-- Username: `admin`
-- Password: (from above command)
+---
 
 ### Step 10: Configure Jenkins Pipelines
 
-#### 10.1 Create ECR Registry Secret in Kubernetes
-```bash
-kubectl create namespace three-tier
+**Creating Frontend Pipeline:**
+1. Jenkins → New Item → **Pipeline** → Name: `frontend-pipeline`
+2. Configure:
+   - GitHub project URL: `https://github.com/povsalman/Three-Tier-DevSecOps`
+   - Build Triggers: ✅ GitHub hook trigger for GITScm polling
+   - Pipeline definition: **Pipeline script from SCM**
+   - SCM: Git, branch: `main`, credentials: `GITHUB`
+   - Script Path: `jenkins-pipeline/jenkinsfile-frontend`
 
+**Creating Backend Pipeline:**
+Repeat the same steps with name `backend-pipeline` and script path `jenkins-pipeline/jenkinsfile-backend`.
+
+**Pipeline Stages (both pipelines):**
+
+| Stage | Description |
+|---|---|
+| Cleaning Workspace | Fresh workspace for each build |
+| Checkout from Git | Clone from GitHub using `GITHUB` credential |
+| Sonarqube Analysis | Static code analysis via SonarQube Scanner |
+| Quality Check | Wait for SonarQube Quality Gate result |
+| OWASP Dependency-Check Scan | Scan `node_modules` for CVEs using NVD API |
+| Trivy File Scan | Filesystem vulnerability scan → `trivyfs.txt` |
+| Docker Image Build | Build Docker image tagged with ECR repo name |
+| ECR Image Pushing | Tag with `BUILD_NUMBER`, push to Amazon ECR |
+| TRIVY Image Scan | Scan final Docker image → `trivyimage.txt` |
+| Checkout Code | Re-checkout for manifest update |
+| Update Deployment file | `sed` new image tag into `deployment.yaml`, commit & push to GitHub |
+
+**Trigger pipelines** by pushing code to GitHub (webhook must be configured in the GitHub repository settings pointing to `http://<JENKINS_IP>:8080/github-webhook/`).
+
+---
+
+### Step 11: Install ArgoCD & Deploy Applications
+
+```bash
+# 1. Create namespaces
+kubectl create namespace three-tier
+kubectl create namespace argocd
+
+# 2. Create ECR registry secret
 kubectl create secret generic ecr-registry-secret \
-  --from-file=.dockerconfigjson=$HOME/.docker/config.json \
+  --from-file=.dockerconfigjson=${HOME}/.docker/config.json \
   --type=kubernetes.io/dockerconfigjson \
   --namespace three-tier
+
+# 3. Install ArgoCD
+kubectl apply -n argocd -f \
+  https://raw.githubusercontent.com/argoproj/argo-cd/v2.4.7/manifests/install.yaml
+
+# 4. Verify pods are running
+kubectl get pods -n argocd
+
+# 5. Expose ArgoCD server as LoadBalancer
+kubectl patch svc argocd-server -n argocd -p '{"spec": {"type": "LoadBalancer"}}'
+
+# 6. Get ArgoCD server URL and initial password
+sudo apt install jq -y
+export ARGOCD_SERVER=$(kubectl get svc argocd-server -n argocd -o json | jq -r '.status.loadBalancer.ingress[0].hostname')
+export ARGO_PWD=$(kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d)
+echo "ARGOCD_SERVER: $ARGOCD_SERVER"
+echo "ARGO_PWD:      $ARGO_PWD"
 ```
 
-#### 10.2 Create Jenkins Pipelines
+**Access ArgoCD UI:** `https://<ARGOCD_SERVER>`  
+Login: `admin` / `<ARGO_PWD>`
 
-**Frontend Pipeline:**
-1. New Item → Pipeline → Name: `frontend-pipeline`
-2. Configure:
-   - GitHub project URL
-   - Build Triggers: GitHub hook trigger
-   - Pipeline script from SCM (Git)
-   - Script Path: `jenkins-pipelines/frontend-pipeline`
+**Connect Private Repository:**
+Settings → Repositories → Connect Repo → Method: HTTPS  
+Enter GitHub repo URL and personal access token.
 
-**Backend Pipeline:**
-1. New Item → Pipeline → Name: `backend-pipeline`
-2. Configure similarly to frontend
+**Create 5 ArgoCD Applications** (via UI or kubectl apply):
 
-**Pipeline Stages:**
-- Checkout code from GitHub
-- Install dependencies
-- Run SonarQube analysis
-- Run OWASP Dependency Check
-- Run Trivy file system scan
-- Build Docker image
-- Scan Docker image with Trivy
-- Push image to Amazon ECR
-- Update Kubernetes manifests with new image tag
-- Commit changes to Git repository
+| App Name | Path | Namespace |
+|---|---|---|
+| `database` | `kubernetes-manifests/database` | `three-tier` |
+| `backend` | `kubernetes-manifests/backend` | `three-tier` |
+| `frontend` | `kubernetes-manifests/frontend` | `three-tier` |
+| `frontend-ingress` | `kubernetes-manifests/frontend-ingress` | `three-tier` |
+| `backend-ingress` | `kubernetes-manifests/backend-ingress` | `three-tier` |
 
-### Step 11: Deploy Applications with ArgoCD
+All applications: Project `default`, Sync Policy `Automatic`, Cluster `https://kubernetes.default.svc`.
 
-```bash
-# Create ArgoCD applications
-kubectl apply -f argocd/application-database.yaml
-kubectl apply -f argocd/application-backend.yaml
-kubectl apply -f argocd/application-frontend.yaml
-kubectl apply -f argocd/application-ingress.yaml
-```
-
-**Configure Private Repository in ArgoCD:**
-1. Settings → Repositories → Connect Repo
-2. Method: HTTPS
-3. Repository URL: Your GitHub repo
-4. Username: GitHub username
-5. Password: GitHub personal access token
-
-**Create Applications in ArgoCD UI:**
-1. **Database Application:**
-   - Application Name: `database`
-   - Project: `default`
-   - Sync Policy: `Automatic`
-   - Repository URL: Your repo
-   - Path: `kubernetes-manifests/database`
-   - Cluster: `https://kubernetes.default.svc`
-   - Namespace: `three-tier`
-
-2. **Backend Application:**
-   - Same configuration, path: `kubernetes-manifests/backend`
-
-3. **Frontend Application:**
-   - Same configuration, path: `kubernetes-manifests/frontend`
-
-4. **Ingress:**
-   - Same configuration, path: `kubernetes-manifests/ingress`
+---
 
 ### Step 12: DNS Configuration
 
-1. Get the Load Balancer DNS name:
 ```bash
+# Get Ingress / ALB DNS name
 kubectl get ingress -n three-tier
 ```
 
-2. Configure your domain DNS:
-   - Create A record or CNAME pointing to the ALB DNS
-   - Example: `app.yourdomain.com` → `<ALB_DNS_NAME>`
+In **Cloudflare** (or your DNS provider):
+- Create a **CNAME** record pointing your domain (e.g., `3devsecops.tech`) to the ALB DNS name shown above
 
-### Step 13: Verify Deployment
+---
+
+### Step 13: Data Persistence Verification
+
+The MongoDB deployment uses a PersistentVolumeClaim defined in `kubernetes-manifests/database/pvc.yaml`. This PVC is backed by an AWS EBS volume that persists independently of the pod lifecycle.
 
 ```bash
-# Check all pods are running
-kubectl get pods -n three-tier
-
-# Check services
-kubectl get svc -n three-tier
-
-# Check ingress
-kubectl get ingress -n three-tier
-
-# View application logs
-kubectl logs -f <pod-name> -n three-tier
-
-# Check ArgoCD sync status
-kubectl get applications -n argocd
+# Verify PV and PVC are bound
+kubectl get pv -n three-tier
+kubectl get pvc -n three-tier
 ```
-
-**Access the Application:**
-- Frontend: `http://<YOUR_DOMAIN>` or `http://<ALB_DNS>`
-- Backend API: `http://<YOUR_DOMAIN>/api`
 
 ---
 
 ## 🔄 CI/CD Workflow
 
-1. **Developer pushes code** to GitHub repository
-2. **GitHub webhook triggers** Jenkins pipeline
-3. **Jenkins pipeline executes:**
-   - Code checkout
-   - Dependency installation
-   - SonarQube code analysis
-   - OWASP dependency scanning
-   - Trivy filesystem scan
-   - Docker image build
-   - Trivy image scan
-   - Push to Amazon ECR
-   - Update Kubernetes manifests with new image tag
-   - Commit manifest changes to Git
-4. **ArgoCD detects** manifest changes in Git
-5. **ArgoCD automatically syncs** and deploys to EKS cluster
-6. **Prometheus collects** metrics from new deployment
-7. **Grafana displays** real-time monitoring data
-
----
-
-## 📊 Monitoring & Logging
-
-### Prometheus Metrics
-- Cluster resource utilization
-- Pod CPU and memory usage
-- Network traffic
-- Application-specific custom metrics
-
-### Grafana Dashboards
-- **Kubernetes Cluster Monitoring** (ID: 3119)
-- **Pod Monitoring**
-- **Deployment Status**
-- **Custom Application Metrics**
-
-### Access Monitoring:
-- Prometheus: `http://<PROMETHEUS_LB_IP>:9090`
-- Grafana: `http://<GRAFANA_LB_IP>:3000`
-
----
-
-## 🔒 Security Features
-
-1. **Code Analysis**: SonarQube scans for code vulnerabilities and code smells
-2. **Dependency Scanning**: OWASP checks for vulnerable dependencies
-3. **Image Scanning**: Trivy scans container images for CVEs
-4. **Private Registry**: Amazon ECR with encryption at rest
-5. **IAM Roles**: Principle of least privilege for all AWS resources
-6. **Network Policies**: Kubernetes network segmentation
-7. **Secrets Management**: Kubernetes secrets for sensitive data
-8. **Security Groups**: AWS security groups for network isolation
-
----
-
-## 📈 Scalability & High Availability
-
-- **Horizontal Pod Autoscaling**: Automatic scaling based on CPU/memory
-- **Multi-AZ Deployment**: Resources across multiple availability zones
-- **Load Balancing**: Application Load Balancer distributes traffic
-- **Persistent Volumes**: Data persistence with EBS volumes
-- **Rolling Updates**: Zero-downtime deployments
-- **Health Checks**: Liveness and readiness probes
-
----
-
-## 🧹 Cleanup Resources
-
-To avoid ongoing AWS charges, clean up resources when done:
-
-```bash
-# Delete EKS cluster and associated resources
-cd eks-terraform
-terraform destroy -auto-approve
-
-# Delete Jenkins server
-cd ../jenkins-server-terraform
-terraform destroy -auto-approve
-
-# Delete S3 bucket (after emptying)
-aws s3 rb s3://your-terraform-state-bucket --force
-
-# Delete DynamoDB table
-aws dynamodb delete-table --table-name terraform-lock
-
-# Delete ECR repositories
-aws ecr delete-repository --repository-name frontend --force
-aws ecr delete-repository --repository-name backend --force
-
-# Delete IAM policies and roles created
+```
+1. Developer pushes code to GitHub
+           │
+           ▼
+2. GitHub webhook triggers Jenkins pipeline
+           │
+           ▼
+3. Jenkins pipeline runs 11 stages:
+   ├── SonarQube Analysis → Quality Gate
+   ├── OWASP Dependency-Check (NVD API)
+   ├── Trivy Filesystem Scan
+   ├── Docker Image Build
+   ├── Push image to Amazon ECR (tagged: BUILD_NUMBER)
+   ├── Trivy Image Scan
+   └── Update kubernetes-manifests/deployment.yaml → git push
+           │
+           ▼
+4. ArgoCD detects manifest change in GitHub
+           │
+           ▼
+5. ArgoCD syncs → rolling update on EKS cluster
+           │
+           ▼
+6. AWS ALB routes external traffic to updated pods
 ```
 
-**Note:** Delete load balancers from AWS console if they persist after cluster deletion.
+---
+
+## 🔒 Security Implementation
+
+| Layer | Tool | What It Scans |
+|---|---|---|
+| Code quality | SonarQube | Bugs, vulnerabilities, code smells in source code |
+| Dependencies | OWASP Dependency-Check | Known CVEs in `node_modules` packages (via NVD API) |
+| Filesystem | Trivy | Files and configs in the build context |
+| Container images | Trivy | CVEs in the final Docker image layers |
+| Registry | Amazon ECR | Private, encrypted-at-rest image storage |
+| IAM | AWS IAM | Least-privilege roles for EKS nodes and LB controller |
+| Secrets | Jenkins Credentials | All secrets stored as Jenkins credentials, never hardcoded |
+| Network | AWS Security Groups | Port-level isolation for Jenkins EC2 |
 
 ---
 
 ## 🐛 Troubleshooting
 
-### Common Issues:
-
-**1. Pods in CrashLoopBackOff:**
+**Pods in CrashLoopBackOff:**
 ```bash
 kubectl describe pod <pod-name> -n three-tier
 kubectl logs <pod-name> -n three-tier
 ```
 
-**2. ArgoCD Sync Failures:**
-- Check repository credentials
-- Verify manifest syntax
-- Review ArgoCD logs: `kubectl logs -n argocd <argocd-pod>`
+**ArgoCD Sync Failures:**
+- Verify repository credentials under Settings → Repositories
+- Check manifest YAML syntax
+- Review ArgoCD pod logs: `kubectl logs -n argocd <argocd-server-pod>`
 
-**3. Jenkins Pipeline Failures:**
-- Verify credentials are configured
-- Check Jenkins console output
-- Ensure AWS permissions are correct
+**Jenkins Pipeline Failures:**
+- Check Console Output for the failed stage
+- Verify all 8 credentials are configured correctly
+- Ensure SonarQube webhook is configured
 
-**4. Load Balancer Not Creating:**
-- Verify AWS Load Balancer Controller is running
-- Check security group configurations
-- Review ingress annotations
-
-**5. ECR Push Failed:**
+**Load Balancer Not Provisioning:**
 ```bash
-# Re-authenticate to ECR
+# Check ALB controller is running
+kubectl get deployment -n kube-system aws-load-balancer-controller
+# Check controller logs
+kubectl logs -n kube-system deployment/aws-load-balancer-controller
+```
+
+**ECR Push Authentication Failure:**
+```bash
+# Re-authenticate Docker to ECR
 aws ecr get-login-password --region us-east-1 | \
   docker login --username AWS --password-stdin \
-  <account-id>.dkr.ecr.us-east-1.amazonaws.com
+  <ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com
 ```
 
 ---
 
-## 📚 Additional Resources
+## 🧹 Cleanup & Resource Removal
 
-- [Terraform AWS Provider Documentation](https://registry.terraform.io/providers/hashicorp/aws/latest/docs)
-- [Amazon EKS Documentation](https://docs.aws.amazon.com/eks/)
-- [ArgoCD Documentation](https://argo-cd.readthedocs.io/)
-- [Jenkins Pipeline Documentation](https://www.jenkins.io/doc/book/pipeline/)
-- [Prometheus Documentation](https://prometheus.io/docs/)
-- [Kubernetes Documentation](https://kubernetes.io/docs/)
+> ⚠️ **Run cleanup after testing is complete to avoid ongoing AWS charges.**
+
+```bash
+# Step 1: Delete EKS cluster (wait for full deletion)
+eksctl delete cluster \
+  --name three-tier-k8s-eks-cluster \
+  --region us-east-1 \
+  --wait \
+  --timeout 30m
+```
+> **Note:** If the delete fails due to load balancers, manually delete them from **EC2 → Load Balancers** first, then retry.
+
+```bash
+# Step 2: Destroy Jenkins EC2 server (from jenkins-server-terraform/)
+terraform destroy
+```
+
+**Via AWS Console:**
+- **Step 3:** Empty and delete the S3 bucket `salman-three-tier-devsecops-project-bucket-s3`
+- **Step 4:** Delete the DynamoDB table `lock-files`
+- **Step 5:** Delete IAM user, custom IAM policies, and revoke GitHub Personal Access Token
 
 ---
+
+## 📚 References
+
+- [Amazon EKS Documentation](https://docs.aws.amazon.com/eks/)
+- [Terraform AWS Provider](https://registry.terraform.io/providers/hashicorp/aws/latest/docs)
+- [ArgoCD Documentation](https://argo-cd.readthedocs.io/)
+- [Jenkins Pipeline Documentation](https://www.jenkins.io/doc/book/pipeline/)
+- [AWS Load Balancer Controller](https://kubernetes-sigs.github.io/aws-load-balancer-controller/)
+- [Trivy Documentation](https://aquasecurity.github.io/trivy/)
+- [OWASP Dependency-Check](https://owasp.org/www-project-dependency-check/)
+- [SonarQube Documentation](https://docs.sonarqube.org/)
+- [NVD API Key Registration](https://nvd.nist.gov/developers/request-an-api-key)
