@@ -47,7 +47,7 @@ pipeline {
         stage('OWASP Dependency-Check Scan') {
             steps {
                 dir('app-code/frontend/notes-frontend') {
-                    dependencyCheck additionalArguments: '--scan ./ --disableYarnAudit --disableNodeAudit', nvdApiKeyCredentialsId: 'nvd-api-key', odcInstallation: 'DP-Check'
+                    dependencyCheck additionalArguments: '--scan ./ --disableYarnAudit --disableNodeAudit', nvdCredentialsId: 'nvd-api-key', odcInstallation: 'DP-Check'
                     dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
                 }
             }
