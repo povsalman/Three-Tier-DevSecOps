@@ -7,7 +7,7 @@ A complete DevSecOps implementation deploying a three-tier web application on AW
 
 ---
 
-## 📋 Project Overview
+## Project Overview
 
 This project demonstrates a production-ready deployment of a three-tier application using modern DevSecOps practices. The pipeline integrates Infrastructure as Code (Terraform), continuous integration/deployment (Jenkins + ArgoCD), and comprehensive security scanning (Trivy, SonarQube, and OWASP Dependency-Check) on AWS cloud infrastructure.
 
@@ -18,7 +18,7 @@ The application consists of:
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -55,7 +55,7 @@ The application consists of:
 
 ---
 
-## 🎯 Key Features
+## Key Features
 
 ### DevSecOps Pipeline
 - **Continuous Integration**: Jenkins pipelines triggered by GitHub webhooks on every push
@@ -82,7 +82,7 @@ The application consists of:
 
 ---
 
-## 🛠️ Technology Stack
+## Technology Stack
 
 | Component | Technology |
 |-----------|-----------|
@@ -103,7 +103,7 @@ The application consists of:
 
 ---
 
-## 📁 Repository Structure
+## Repository Structure
 
 ```
 Three-Tier-DevSecOps/
@@ -146,7 +146,7 @@ Three-Tier-DevSecOps/
 
 ---
 
-## 🚀 Complete Deployment Guide
+## Complete Deployment Guide
 
 ### Prerequisites
 
@@ -509,7 +509,7 @@ kubectl get pvc -n three-tier
 
 ---
 
-## 🔄 CI/CD Workflow
+## CI/CD Workflow
 
 ```
 1. Developer pushes code to GitHub
@@ -539,7 +539,7 @@ kubectl get pvc -n three-tier
 
 ---
 
-## 🔒 Security Implementation
+## Security Implementation
 
 | Layer | Tool | What It Scans |
 |---|---|---|
@@ -554,7 +554,7 @@ kubectl get pvc -n three-tier
 
 ---
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 **Pods in CrashLoopBackOff:**
 ```bash
@@ -590,9 +590,9 @@ aws ecr get-login-password --region us-east-1 | \
 
 ---
 
-## 🧹 Cleanup & Resource Removal
+## Cleanup & Resource Removal
 
-> ⚠️ **Run cleanup after testing is complete to avoid ongoing AWS charges.**
+> **Run cleanup after testing is complete to avoid ongoing AWS charges.**
 
 ```bash
 # Step 1: Delete EKS cluster (wait for full deletion)
@@ -616,7 +616,7 @@ terraform destroy
 
 ---
 
-## 📚 References
+## References
 
 - [Amazon EKS Documentation](https://docs.aws.amazon.com/eks/)
 - [Terraform AWS Provider](https://registry.terraform.io/providers/hashicorp/aws/latest/docs)
