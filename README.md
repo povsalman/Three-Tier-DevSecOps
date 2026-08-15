@@ -3,7 +3,6 @@
 A complete DevSecOps implementation deploying a three-tier web application on AWS Elastic Kubernetes Service (EKS) with automated CI/CD pipelines, comprehensive security scanning, and GitOps-based continuous delivery.
 
 **Submitted by:** Salman Khan (22I-1285) · Maryum Tanvir (22I-0751)  
-**Course:** Cloud Computing — FAST NUCES Islamabad  
 **AWS Region:** `us-east-1` (US East — N. Virginia)
 
 ---
